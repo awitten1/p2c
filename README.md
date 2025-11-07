@@ -1,4 +1,4 @@
-# P2C: Plan-to-Code Query Compiler
+# P2C: Plan-to-C Query Compiler
 
 p2c is an educational compiling query engine.
 Given an operator tree (query plan), it generates C++ code (hence plan-to-code).
@@ -31,7 +31,7 @@ cd data-generator
 ```
 
 This creates scale factor 1 TPC-H data in `data-generator/output/`.
-The script first uses the `dbgen` tool to generate csv files, then reads and converts them to binary data. 
+The script first uses the `dbgen` tool to generate csv files, then reads and converts them to binary data.
 
 ### Code Generation & Compilation:
 ```bash
