@@ -10,6 +10,8 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <format>
+#include <fmt/core.h>
 
 namespace p2c {
 
@@ -259,7 +261,7 @@ private:
 // from https://en.cppreference.com/w/cpp/utility/format/formatter.html
 // --------------------------------------------------------------------------
 template<>
-struct std::formatter<p2c::date> {
+struct fmt::formatter<p2c::date> {
    // Parses format specifications; we have none at the moment
    constexpr auto parse(format_parse_context &ctx) -> decltype(ctx.begin()) { return ctx.end(); }
    template<typename FormatContext>

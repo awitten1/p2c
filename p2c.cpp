@@ -11,15 +11,16 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+#include <fmt/core.h>
 
-#if __has_include(<format>)
-#include <format>
-#include <print>
+#if __has_include(<fmt::format>)
+// #include <fmt::format>
+// #include <print>
 #elif __has_include(<fmt/core.h>)
 #include <fmt/core.h>
 using namespace fmt;
 #else
-#error "Neither <format> nor libfmt is available. Please install libfmt and link it in your Makefile."
+#error "Neither <fmt::format> nor libfmt is available. Please install libfmt and link it in your Makefile."
 #endif
 
 #include "tpch.hpp"
@@ -27,6 +28,7 @@ using namespace fmt;
 
 using namespace std;
 using namespace p2c;
+using namespace fmt;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -41,11 +43,11 @@ struct IU {
    // generate unique variable name
    static string genVar(const string& name) {
       static unsigned varCounter = 1;
-      return format("{}{}", name, varCounter++);
+      return fmt::format("{}{}", name, varCounter++);
    }
 };
 
-// format generic list of strings with delimiter (helper)
+// fmt::format generic list of strings with delimiter (helper)
 string join(const vector<string>& strs, const string& delim) {
    string result = "";
    bool first = true;
@@ -59,7 +61,7 @@ string join(const vector<string>& strs, const string& delim) {
    return result;
 }
 
-// format comma-separated list of IU types (helper)
+// fmt::format comma-separated list of IU types (helper)
 string formatTypes(const vector<IU*>& ius) {
    vector<string> iuNames;
    for (IU* iu : ius)
@@ -67,7 +69,7 @@ string formatTypes(const vector<IU*>& ius) {
    return join(iuNames, ",");
 }
 
-// format comma-separated list of IU varnames (helper)
+// fmt::format comma-separated list of IU varnames (helper)
 string formatVarnames(const vector<IU*>& ius) {
    vector<string> varNames;
    for (IU* iu : ius)
@@ -186,9 +188,9 @@ struct ConstExp : public Exp {
 
    string compile() override {
       if constexpr (type_tag<T>::tag == Type::String) {
-         return format("\"{}\"", x);  // Add quotes for strings
+         return fmt::format("\"{}\"", x);  // Add quotes for strings
       } else {
-         return format("{}", x);
+         return fmt::format("{}", x);
       }
    }
    IUSet iusUsed() override { return {}; }
@@ -210,7 +212,7 @@ struct FnExp : public Exp {
       vector<string> strs;
       for (auto& e : args)
          strs.emplace_back(e->compile());
-      return format("{}({})", fnName, join(strs, ","));
+      return fmt::format("{}({})", fnName, join(strs, ","));
    }
 
    IUSet iusUsed() override {
@@ -277,9 +279,9 @@ struct Scan : public Operator {
    }
 
    void produce(const IUSet& required, ConsumerFn consume) override {
-      genBlock(format("for (uint64_t i = 0; i != db.{}.tupleCount; i++)", relName), [&]() {
+      genBlock(fmt::format("for (uint64_t i = 0; i != db.{}.tupleCount; i++)", relName), [&]() {
          for (IU* iu : required)
-            provideIU(iu, format("db.{}.{}[i]", relName, iu->name));
+            provideIU(iu, fmt::format("db.{}.{}[i]", relName, iu->name));
          consume();
       });
    }
@@ -307,7 +309,7 @@ struct Selection : public Operator {
 
    void produce(const IUSet& required, ConsumerFn consume) override {
       input->produce(required | pred->iusUsed(), [&]() {
-         genBlock(format("if ({})", pred->compile()), [&]() {
+         genBlock(fmt::format("if ({})", pred->compile()), [&]() {
             consume();
          });
       });
@@ -369,7 +371,7 @@ struct Sort : public Operator {
 
       // define custom comparator
       genBlock("struct", [&]() {
-         genBlock(format("bool operator()(const tuple<{0}>& lhs, const tuple<{0}>& rhs) const",
+         genBlock(fmt::format("bool operator()(const tuple<{0}>& lhs, const tuple<{0}>& rhs) const",
                               formatTypes(allIUs)),
                   [&]() {
             for (size_t i = 0; i != keyIUs.size(); i++) {
@@ -391,10 +393,10 @@ struct Sort : public Operator {
       print("sort({0}.begin(), {0}.end(), {1});\n", v.varname, cmp.varname);
 
       // iterate
-      genBlock(format("for (auto& t : {})", v.varname), [&]() {
+      genBlock(fmt::format("for (auto& t : {})", v.varname), [&]() {
          for (unsigned i = 0; i < allIUs.size(); i++)
             if (required.contains(allIUs[i]))
-               provideIU(allIUs[i], format("get<{}>(t)", i));
+               provideIU(allIUs[i], fmt::format("get<{}>(t)", i));
          consume();
       });
    };
@@ -417,26 +419,26 @@ struct Aggregate {
 struct CountAggregate final : Aggregate {
    CountAggregate(string name) : Aggregate(name, Type::Integer) {}
    string genInitValue() override { return "1"; }
-   string genUpdate(string oldValueRef) override { 
-      return format("{} += 1", oldValueRef); 
+   string genUpdate(string oldValueRef) override {
+      return fmt::format("{} += 1", oldValueRef);
    }
 };
 
 struct MinAggregate final : Aggregate {
    MinAggregate(string name, IU* _inputIU) : Aggregate(name, _inputIU) {}
 
-   string genInitValue() override { return format("{}", inputIU->varname); }
+   string genInitValue() override { return fmt::format("{}", inputIU->varname); }
    string genUpdate(string oldValueRef) override {
-      return format("{} = std::min({}, {})", oldValueRef, oldValueRef, inputIU->varname);
+      return fmt::format("{} = std::min({}, {})", oldValueRef, oldValueRef, inputIU->varname);
    }
 };
 
 struct SumAggregate final : Aggregate {
    SumAggregate(string name, IU* _inputIU) : Aggregate(name, _inputIU) {}
 
-   string genInitValue() override { return format("{}", inputIU->varname); }
-   string genUpdate(string oldValueRef) override { 
-      return format("{} += {}", oldValueRef, inputIU->varname);
+   string genInitValue() override { return fmt::format("{}", inputIU->varname); }
+   string genUpdate(string oldValueRef) override {
+      return fmt::format("{} += {}", oldValueRef, inputIU->varname);
    }
 };
 
@@ -478,7 +480,7 @@ struct GroupBy : public Operator {
       input->produce(groupKeyIUs | inputIUs(), [&]() {
          // insert tuple into hash table
          print("auto it = {}.find({{{}}});\n", ht.varname, formatVarnames(groupKeyIUs.v));
-         genBlock(format("if (it == {}.end())", ht.varname), [&]() {
+         genBlock(fmt::format("if (it == {}.end())", ht.varname), [&]() {
             vector<string> initValues;
             for (auto& agg : aggs)
                initValues.push_back(agg->genInitValue());
@@ -489,21 +491,21 @@ struct GroupBy : public Operator {
             // update group
             unsigned i = 0;
             for (auto& agg : aggs) {
-               print("{};\n", agg->genUpdate(format("get<{}>(it->second)", i++)));
+               print("{};\n", agg->genUpdate(fmt::format("get<{}>(it->second)", i++)));
             }
          });
       });
 
       // iterate over hash table
-      genBlock(format("for (auto& it : {})", ht.varname), [&]() {
+      genBlock(fmt::format("for (auto& it : {})", ht.varname), [&]() {
          for (unsigned i = 0; i < groupKeyIUs.size(); i++) {
             IU* iu = groupKeyIUs.v[i];
             if (required.contains(iu))
-               provideIU(iu, format("get<{}>(it.first)", i));
+               provideIU(iu, fmt::format("get<{}>(it.first)", i));
          }
          unsigned i = 0;
          for (auto& agg : aggs) {
-            provideIU(&agg->resultIU, format("get<{}>(it.second)", i));
+            provideIU(&agg->resultIU, fmt::format("get<{}>(it.second)", i));
             i++;
          }
          consume();
@@ -552,16 +554,16 @@ struct HashJoin : public Operator {
       // probe hash table
       right->produce(rightRequiredIUs, [&]() {
          // iterate over matches
-         genBlock(format("for (auto range = {}.equal_range({{{}}}); range.first!=range.second; range.first++)", ht.varname, formatVarnames(rightKeyIUs)), [&]() {
+         genBlock(fmt::format("for (auto range = {}.equal_range({{{}}}); range.first!=range.second; range.first++)", ht.varname, formatVarnames(rightKeyIUs)), [&]() {
             // unpack payload
             unsigned countP = 0;
             for (IU* iu : leftPayloadIUs)
-               provideIU(iu, format("get<{}>(range.first->second)", countP++));
+               provideIU(iu, fmt::format("get<{}>(range.first->second)", countP++));
             // unpack keys if needed
             for (unsigned i = 0; i < leftKeyIUs.size(); i++) {
                IU* iu = leftKeyIUs[i];
                if (required.contains(iu))
-                  provideIU(iu, format("get<{}>(range.first->first)", i));
+                  provideIU(iu, fmt::format("get<{}>(range.first->first)", i));
             }
             // consume
             consume();
@@ -591,7 +593,7 @@ unique_ptr<Exp> makeCallExp(const string& fn, std::unique_ptr<T>... args) {
 
 // Print
 void produceAndPrint(unique_ptr<Operator> root, const std::vector<IU*>& ius, unsigned perfRepeat = 2) {
-   genBlock(format("for (uint64_t {0} = 0; {0} != {1}; {0}++)", IU::genVar("perfRepeat"), perfRepeat - 1), [&]() {
+   genBlock(fmt::format("for (uint64_t {0} = 0; {0} != {1}; {0}++)", IU::genVar("perfRepeat"), perfRepeat - 1), [&]() {
       root->produce(IUSet(ius), [&]() {
          for (IU* iu : ius)
             print("cout << {} << \" \";", iu->varname);
@@ -642,7 +644,7 @@ int main(int argc, char* argv[]) {
       IU* r_name = r->getIU("r_name");
       auto r_sel =
           make_unique<Selection>(std::move(r), makeCallExp("std::equal_to()", make_unique<IUExp>(r_name),
-                                                           make_unique<ConstExp<string_view>>("ASIA")));
+                                                           make_unique<ConstExp<std::string_view>>("ASIA")));
 
       auto n = make_unique<Scan>("nation");
       IU* n_nationkey = n->getIU("n_nationkey");

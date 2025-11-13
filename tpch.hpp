@@ -7,6 +7,7 @@
 
 #include "io.hpp"
 #include "types.hpp"
+#include <fmt/core.h>
 
 namespace p2c {
 
