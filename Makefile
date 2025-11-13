@@ -1,5 +1,6 @@
 CXX ?= g++
-FLAGS := -std=c++23 -g -Wall -O0 -lfmt # on old compilers: -lfmt
+FLAGS := -std=c++23 -g -Wall -O0 # on old compilers: -lfmt
+LD_FLAGS := -lfmt
 
 # (1) run p2c to generate query code, format the generated code if clang-format exists
 # (2) compile generated code
@@ -9,7 +10,7 @@ query: p2c queryFrame.cpp
 
 # compile the query compiler p2c
 p2c: p2c.cpp
-	$(CXX) $(FLAGS) -o p2c p2c.cpp -lfmt
+	$(CXX) $(FLAGS) -o p2c p2c.cpp $(LD_FLAGS)
 
 clean:
 	rm -f p2c query gen.cpp
