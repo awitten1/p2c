@@ -1,0 +1,34 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-std=c++23",
+      "-g",
+      "-Wall",
+      "-O0",
+      "-o",
+      "p2c",
+      "p2c.cpp"
+    ],
+    "directory": "/home/andrew-witten/code/p2c",
+    "file": "/home/andrew-witten/code/p2c/p2c.cpp",
+    "output": "/home/andrew-witten/code/p2c/p2c"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-std=c++23",
+      "-g",
+      "-Wall",
+      "-O3",
+      "-o",
+      "query",
+      "queryFrame.cpp"
+    ],
+    "directory": "/home/andrew-witten/code/p2c",
+    "file": "/home/andrew-witten/code/p2c/queryFrame.cpp",
+    "output": "/home/andrew-witten/code/p2c/query"
+  }
+]
