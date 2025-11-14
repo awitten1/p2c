@@ -4,7 +4,7 @@
 # @file
 # @version 0.1
 COMPILER = g++
-FLAGS = -Wall -std=c++23 -pthread -mavx2 
+FLAGS = -Wall -std=c++23 -pthread
 DEBUG_FLAGS = -g -fno-omit-frame-pointer -fsanitize=address -O0
 RELEASE_FLAGS = -O3
 
